@@ -23,6 +23,7 @@ class ValkFrame:
 		self._timer = scheduler(time, sleep)
 		self._timerInterval = int(CONFIG['Settings']['interval'])  # config [sec]
 		self._timerPrio = 1
+		self.modules = self.getModules()
 
 
 	def getModules(self) -> dict:
@@ -72,6 +73,9 @@ class ValkFrame:
 
 
 	def controller(self, schedule):
+		for module, cfg in self.modules.items():
+			if cfg['VFrame']['interval'] == "True" or cfg['VFrame']['interval'] == "true":
+				self.startModule(module, cfg)
 		self._timer.enter(self._timerInterval, self._timerPrio, self.controller, (schedule,))
 
 
@@ -81,19 +85,15 @@ class ValkFrame:
 		- Loads CONFIG Version Information
 		- Starts CONFIG Observer
 		"""
-		# Write log
 		LOGGER.Info(f"*" * 69)
-		LOGGER.Info(f"PROJECT     : {CONFIG['VFrame']['name']} | ..a project by VALKYTEQ")
-		LOGGER.Info(f"DESCRIPTION : {CONFIG['VFrame']['description']}")
-		LOGGER.Info(f"AUTHOR      : {CONFIG['VFrame']['author']}")
-		LOGGER.Info(f"VERSION     : {CONFIG['VFrame']['version']}")
-		LOGGER.Info(f"*" * 69)
-
-		# load modules
-		modules = self.getModules()
-		if len(modules) > 0:
-			for module, cfg in modules.items():
-				self.startModule(module, cfg)
+		# start modules
+		if len(self.modules) > 0:
+			for module, cfg in self.modules.items():
+				if cfg['VFrame']['interval'] == "True" or cfg['VFrame']['interval'] == "true":
+					LOGGER.Info(f"Scheduler: {cfg['VFrame']['name']}")
+				elif cfg['VFrame']['autostart'] == "True" or cfg['VFrame']['autostart'] == "true":
+					LOGGER.Info(f"Autostart: {cfg['VFrame']['name']}")
+					self.startModule(module, cfg)
 		else:
 			LOGGER.Info(f"No modules loaded")
 		LOGGER.Info(f"*" * 69)
@@ -105,6 +105,14 @@ class ValkFrame:
 
 # start up framework
 if __name__ == '__main__':
+
+	# Write log
+	LOGGER.Info(f"*" * 69)
+	LOGGER.Info(f"PROJECT     : {CONFIG['VFrame']['name']} | ..a project by VALKYTEQ")
+	LOGGER.Info(f"DESCRIPTION : {CONFIG['VFrame']['description']}")
+	LOGGER.Info(f"AUTHOR      : {CONFIG['VFrame']['author']}")
+	LOGGER.Info(f"VERSION     : {CONFIG['VFrame']['version']}")
+	LOGGER.Info(f"*" * 69)
 
 	vf = ValkFrame()
 	vf.run()
