@@ -1,7 +1,7 @@
 # Valkore
 
 
-Valkore - The Valkyrie Core framework to load custom python modules  
+The Valkyrie Core framework to load custom python modules  
 Project: **_valkore_**
 
 ### Contact:
