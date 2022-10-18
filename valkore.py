@@ -12,12 +12,12 @@ from modules.config.config import Config
 from modules.database.database import Database
 
 
-LOGGER = Logger(path="modules/logger/config.ini", name="valkframe")
+LOGGER = Logger(path="modules/logger/config.ini", name="valkore")
 CONFIG = Config(path="config.ini").readConfig()
 DB = Database(LOGGER, CONFIG)
 
 
-class ValkFrame:
+class ValKore:
 
 	def __init__(self):
 		self._timer = scheduler(time, sleep)
@@ -34,10 +34,10 @@ class ValkFrame:
 			files = next(os.walk(f"modules/{module}"))[2]
 			if "config.ini" in files and f"{module}.py" in files:
 				modCfg = Config(path=f"modules/{module}/config.ini").readConfig()
-				appName = modCfg['VFrame']['name']
-				appVersion = modCfg['VFrame']['version']
-				appAuthor = f"Author: {modCfg['VFrame']['author']}"
-				appEditor = f"{appAuthor} | Editor: {modCfg['VFrame']['modify']}" if "modify" in modCfg['VFrame'] else appAuthor
+				appName = modCfg['VKore']['name']
+				appVersion = modCfg['VKore']['version']
+				appAuthor = f"Author: {modCfg['VKore']['author']}"
+				appEditor = f"{appAuthor} | Editor: {modCfg['VKore']['modify']}" if "modify" in modCfg['VKore'] else appAuthor
 				LOGGER.Info(f"Loading module: {appName} | v{appVersion} | {appEditor}")
 				load[module] = modCfg
 			else:
@@ -74,7 +74,7 @@ class ValkFrame:
 
 	def controller(self, schedule):
 		for module, cfg in self.modules.items():
-			if cfg['VFrame']['interval'] == "True" or cfg['VFrame']['interval'] == "true":
+			if cfg['VKore']['interval'] == "True" or cfg['VKore']['interval'] == "true":
 				self.startModule(module, cfg)
 		self._timer.enter(self._timerInterval, self._timerPrio, self.controller, (schedule,))
 
@@ -89,10 +89,10 @@ class ValkFrame:
 		# start modules
 		if len(self.modules) > 0:
 			for module, cfg in self.modules.items():
-				if cfg['VFrame']['interval'] == "True" or cfg['VFrame']['interval'] == "true":
-					LOGGER.Info(f"Scheduler: {cfg['VFrame']['name']}")
-				elif cfg['VFrame']['autostart'] == "True" or cfg['VFrame']['autostart'] == "true":
-					LOGGER.Info(f"Autostart: {cfg['VFrame']['name']}")
+				if cfg['VKore']['interval'] == "True" or cfg['VKore']['interval'] == "true":
+					LOGGER.Info(f"Scheduler: {cfg['VKore']['name']}")
+				elif cfg['VKore']['autostart'] == "True" or cfg['VKore']['autostart'] == "true":
+					LOGGER.Info(f"Autostart: {cfg['VKore']['name']}")
 					self.startModule(module, cfg)
 		else:
 			LOGGER.Info(f"No modules loaded")
@@ -108,11 +108,11 @@ if __name__ == '__main__':
 
 	# Write log
 	LOGGER.Info(f"*" * 69)
-	LOGGER.Info(f"PROJECT     : {CONFIG['VFrame']['name']} | ..a project by VALKYTEQ")
-	LOGGER.Info(f"DESCRIPTION : {CONFIG['VFrame']['description']}")
-	LOGGER.Info(f"AUTHOR      : {CONFIG['VFrame']['author']}")
-	LOGGER.Info(f"VERSION     : {CONFIG['VFrame']['version']}")
+	LOGGER.Info(f"PROJECT     : {CONFIG['VKore']['name']} | ..a project by VALKYTEQ")
+	LOGGER.Info(f"DESCRIPTION : {CONFIG['VKore']['description']}")
+	LOGGER.Info(f"AUTHOR      : {CONFIG['VKore']['author']}")
+	LOGGER.Info(f"VERSION     : {CONFIG['VKore']['version']}")
 	LOGGER.Info(f"*" * 69)
 
-	vf = ValkFrame()
-	vf.run()
+	vk = ValKore()
+	vk.run()
