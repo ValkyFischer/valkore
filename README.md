@@ -1,8 +1,8 @@
-# ValkFrame
+# Valkore
 
 
-Framework to load custom python modules  
-Project: **_valkframe_**
+Valkore - The Valkyrie Core framework to load custom python modules  
+Project: **_valkore_**
 
 ### Contact:
 You can reach out to us over...  
@@ -11,4 +11,4 @@ You can reach out to us over...
 <br><br>
 
 Find the full docs here:  
-https://valky.dev/docs/valkframe/
+https://valky.dev/docs/valkore/
