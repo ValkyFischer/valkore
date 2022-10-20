@@ -11,11 +11,11 @@ def init() -> bool:
 	:return: True if install successful
 	"""
 	# we print as we don't have logger yet
-	print(f"*" * 77)
+	print(f"-" * 100)
 	print("VALKORE - Valkyrie Core")
-	print(f"-" * 77)
+	print(f"-" * 100)
 	print("Initializing Valkore Dependencies")
-	print(f"*" * 77)
+	print(f"-" * 100)
 	input("Press Enter to continue...")
 
 	# we read manually as we don't have config yet
@@ -23,20 +23,20 @@ def init() -> bool:
 	cfg.read("config.ini")
 
 	# try to install dependencies
-	if getDependency(cfg):
+	if getDependency(cfg, "Valkore"):
 		return True
 	else:
 		return False
 
 
-def getDependency(config: dict, logger=None) -> bool:
+def getDependency(config: dict, module: str, logger=None) -> bool:
 	"""Installs all dependencies found in the module's configuration.
 
+	:param module: Module Name
 	:param config: Module Configuration
 	:param logger: Can be None for initialization
 	:return: True if all dependencies are installed
 	"""
-	step = 0
 	lookup = urlopen("https://valky.dev/api/valkore/")
 	whitelist = json.loads(lookup.read())
 
@@ -44,25 +44,29 @@ def getDependency(config: dict, logger=None) -> bool:
 
 		if mod in whitelist:
 			if not os.path.isdir(f"modules/{mod}"):
+				if logger:
+					logger.Info(f"{module}: Found dependency '{mod}'")
+				else:
+					print(f"{module}: Found dependency '{mod}'")
 				out = check_output(f"git clone {whitelist[mod]} modules/{mod}")
 				if not out:
-					step = step + 1
 					if logger:
-						logger.Info(f"Step {step}: '{mod}' download complete")
+						logger.Info(f"{module}: '{mod}' download complete")
 					else:
-						print(f"Step {step}: '{mod}' download complete")
+						print(f"{module}: '{mod}' download complete")
 				if not os.path.isdir(f"modules/{mod}"):
 					if logger:
-						logger.Error(f"Step {step}: Error downloading '{mod}'!")
+						logger.Error(f"{module}: Error downloading '{mod}'!")
 					else:
-						print(f"Step {step}: Error downloading '{mod}'!")
+						print(f"{module}: Error downloading '{mod}'!")
 					return False
 
 		else:
+			# TODO: pip install
 			if logger:
-				logger.Error(f"Step {step}: '{mod}' not whitelisted!")
+				logger.Error(f"{module}: '{mod}' not whitelisted!")
 			else:
-				print(f"Step {step}: '{mod}' not whitelisted!")
+				print(f"{module}: '{mod}' not whitelisted!")
 			return False
 
 	return True

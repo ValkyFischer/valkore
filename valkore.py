@@ -1,14 +1,10 @@
-import os
-import sys
 import init
 
-from threading import Thread
-from subprocess import PIPE, Popen
-from queue import Queue, Empty
 from sched import scheduler
 from time import time, sleep
 
 try:
+	import tools
 	# check if we can import main modules
 	from modules.logger.logger import Logger
 	from modules.config.config import Config
@@ -16,6 +12,7 @@ try:
 except ImportError:
 	# if not, initialize download
 	if init.init():
+		import tools
 		from modules.logger.logger import Logger
 		from modules.config.config import Config
 	else:
@@ -23,76 +20,31 @@ except ImportError:
 		exit(1)
 
 
-LOGGER = Logger(path="modules/logger/config.ini", name="valkore")
-CONFIG = Config(path="config.ini").readConfig()
-
-
 class ValKore:
 
-	def __init__(self):
+	def __init__(self, interface=None):
+		
 		self._timer = scheduler(time, sleep)
 		self._timerInterval = int(CONFIG['Settings']['interval'])  # config [sec]
 		self._timerPrio = 1
-		self.modules = self.getModules()
 
+		self.log_ui = None
+		if interface is True:
+			self.log_ui = valkore_ui.load()
+			self.log = Logger(path="modules/logger/config.ini", name="valkore", widget=self.log_ui.getLogWidget())
+		else:
+			self.log = Logger(path="modules/logger/config.ini", name="valkore", widget=self.log_ui)
 
-	def getModules(self) -> dict:
-		"""Go through 'modules' directory.
+		# Write log
+		self.log.Info(f"-" * 100)
+		self.log.Info(f"PROJECT     : {CONFIG['VKore']['name']} | ..a project by VALKYTEQ")
+		self.log.Info(f"DESCRIPTION : {CONFIG['VKore']['description']}")
+		self.log.Info(f"AUTHOR      : {CONFIG['VKore']['author']}")
+		self.log.Info(f"VERSION     : {CONFIG['VKore']['version']}")
+		self.log.Info(f"-" * 100)
 
-		- Loads if config and py exist
-
-		:return: Modules Configuration
-		"""
-		modules = next(os.walk('modules'))[1]
-		load = {}
-
-		for module in modules:
-			files = next(os.walk(f"modules/{module}"))[2]
-			if "config.ini" in files and f"{module}.py" in files:
-				modCfg = Config(path=f"modules/{module}/config.ini").readConfig()
-				appName = modCfg['VKore']['name']
-				appVersion = modCfg['VKore']['version']
-				appAuthor = f"Author: {modCfg['VKore']['author']}"
-				appEditor = f"{appAuthor} | Editor: {modCfg['VKore']['modify']}" if "modify" in modCfg['VKore'] else appAuthor
-				LOGGER.Info(f"Loading module: {appName} | v{appVersion} | {appEditor}")
-				load[module] = modCfg
-			else:
-				LOGGER.Warn(f"Loading error: {module}")
-
-		return load
-
-
-	def startModule(self, modlue: str, cfg: dict):
-		"""Start a Valkore Module in an own thread.
-
-		:param modlue: Module to start
-		:param cfg: Configuration
-		"""
-
-		ON_POSIX = 'posix' in sys.builtin_module_names
-		server_thread = f"{modlue}"
-
-		# put output in queue
-		def enqueue_output(out, queue):
-			for line in iter(out.readline, b''):
-				queue.put(line)
-			out.close()
-
-		cwd = f"modules\\{modlue}"
-		cmd = Popen(["python", f"{modlue}.py"], cwd=cwd, stdout=PIPE, close_fds=ON_POSIX)
-		que = Queue()
-		trd = Thread(target=enqueue_output, name=server_thread, args=(cmd.stdout, que))
-		trd.daemon = True  # thread dies with the program
-		trd.start()
-
-		# read line without blocking
-		try:
-			line = que.get_nowait()
-		except Empty:
-			pass
-		else:  # got line
-			LOGGER.Debug(f"{modlue} Output: {line}")
-
+		# load modules
+		self.modules = tools.loadModules(self.log)
 
 	def startModuleInterval(self, schedule):
 		"""Start a Valkore Module in a given interval.
@@ -100,10 +52,10 @@ class ValKore:
 		:param schedule: Sched scheduler
 		"""
 		for module, cfg in self.modules.items():
-			if cfg['VKore']['interval'] == "True" or cfg['VKore']['interval'] == "true":
-				self.startModule(module, cfg)
+			if 'interval' in cfg['VKore']:
+				if cfg['VKore']['interval'] == "True" or cfg['VKore']['interval'] == "true":
+					tools.startModule(self.log, module)
 		self._timer.enter(self._timerInterval, self._timerPrio, self.startModuleInterval, (schedule,))
-
 
 	# Startup
 	def run(self):
@@ -114,7 +66,7 @@ class ValKore:
 		- Check if start as interval
 		- Check if start immediate
 		"""
-		LOGGER.Info(f"*" * 77)
+		self.log.Info(f"-" * 100)
 
 		# go through all modules
 		if len(self.modules) > 0:
@@ -123,42 +75,51 @@ class ValKore:
 
 				# install dependencies
 				if 'Dependency' in cfg:
-					init.getDependency(cfg, LOGGER)
+					init.getDependency(cfg, module, self.log)
 
-				# check if interval..
-				if cfg['VKore']['interval'] == "True" or cfg['VKore']['interval'] == "true":
-					LOGGER.Info(f"Scheduler: {cfg['VKore']['name']}")
-					start = True
-				# ..or if autostart
-				elif cfg['VKore']['autostart'] == "True" or cfg['VKore']['autostart'] == "true":
-					LOGGER.Info(f"Autostart: {cfg['VKore']['name']}")
-					self.startModule(module, cfg)
-					start = True
+				# if not in UI mode:
+				if module != "valkore-ui" and self.log_ui is None:
+					# check if interval..
+					if cfg['VKore']['interval'] == "True" or cfg['VKore']['interval'] == "true":
+						self.log.Info(f"Scheduler: {cfg['VKore']['name']}")
+						start = True
+					# ..or if autostart
+					elif cfg['VKore']['autostart'] == "True" or cfg['VKore']['autostart'] == "true":
+						self.log.Info(f"Autostart: {cfg['VKore']['name']}")
+						tools.startModule(self.log, module)
+						start = True
 
-			# nothing to start and /or only libraries
-			if start is False:
-				LOGGER.Info(f"No modules started or scheduled")
+			# only starting UI
+			if self.log_ui is not None:
+				self.log.Info(f"Autostart: Valkore UI")
+			# nothing to start
+			if start is False and self.log_ui is None:
+				self.log.Info(f"No modules started or scheduled")
 
-		# this should never happen, as VKore itself needs two modules
+		# this should never happen, as VKore itself needs three modules
 		else:
-			LOGGER.Info(f"No modules loaded")
-		LOGGER.Info(f"*" * 77)
+			self.log.Info(f"No modules loaded")
+		self.log.Info(f"-" * 100)
 
-		# Start and enter Interval Timer
-		self._timer.enter(1, self._timerPrio, self.startModuleInterval, (self._timer,))
-		self._timer.run()
+		# Enter UI loop
+		if self.log_ui is not None:
+			self.log_ui.mainloop()
+		# Start Core loop
+		else:
+			self._timer.enter(1, self._timerPrio, self.startModuleInterval, (self._timer,))
+			self._timer.run()
 
 
 # start up framework
 if __name__ == '__main__':
+	CONFIG = Config(path="config.ini").readConfig()
+	if CONFIG['Settings']['interface'] == "True" or CONFIG['Settings']['interface'] == "true":
+		import importlib
+		valkore_ui = importlib.import_module("modules.valkore-ui.valkore-ui")
+		isUi = True
+	else:
+		valkore_ui = None
+		isUi = False
 
-	# Write log
-	LOGGER.Info(f"*" * 77)
-	LOGGER.Info(f"PROJECT     : {CONFIG['VKore']['name']} | ..a project by VALKYTEQ")
-	LOGGER.Info(f"DESCRIPTION : {CONFIG['VKore']['description']}")
-	LOGGER.Info(f"AUTHOR      : {CONFIG['VKore']['author']}")
-	LOGGER.Info(f"VERSION     : {CONFIG['VKore']['version']}")
-	LOGGER.Info(f"*" * 77)
-
-	vk = ValKore()
+	vk = ValKore(isUi)
 	vk.run()
