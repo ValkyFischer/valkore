@@ -1,8 +1,11 @@
 import os
 import sys
 from queue import Queue, Empty
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, check_output
 from threading import Thread
+from urllib.request import urlopen
+
+from flask import json
 
 from modules.config.config import Config
 
@@ -80,3 +83,59 @@ def runModule(widget: any, modlue: str):
 	trd = Thread(target=dyn_module.run, name=modlue, args=(widget,))
 	trd.daemon = True
 	trd.start()
+
+
+def getModule(config: dict, module: str, logger: any, whitelist: dict):
+	logger.Info(f"{module}: Starting module download")
+	out = check_output(f"git clone {whitelist[module]} modules/{module}")
+	if not out:
+		if logger:
+			logger.Info(f"{module}: Module download complete")
+			logger.Info(f"{module}: Checking for dependencies")
+			if getDependency(config, module):
+				logger.Info(f"{module}: Dependencies up to date")
+			else:
+				logger.Info(f"{module}: Error in dependencies!")
+
+
+def getDependency(config: dict, module: str, logger=None) -> bool:
+	"""Installs all dependencies found in the module's configuration.
+
+	:param module: Module Name
+	:param config: Module Configuration
+	:param logger: Can be None for initialization
+	:return: True if all dependencies are installed
+	"""
+	lookup = urlopen("https://valky.dev/api/valkore/")
+	whitelist = json.loads(lookup.read())
+
+	for mod, ver in config['Dependency'].items():
+
+		if mod in whitelist:
+			if not os.path.isdir(f"modules/{mod}"):
+				if logger:
+					logger.Info(f"{module}: Found dependency '{mod}'")
+				else:
+					print(f"{module}: Found dependency '{mod}'")
+				out = check_output(f"git clone {whitelist[mod]} modules/{mod}")
+				if not out:
+					if logger:
+						logger.Info(f"{module}: '{mod}' download complete")
+					else:
+						print(f"{module}: '{mod}' download complete")
+				if not os.path.isdir(f"modules/{mod}"):
+					if logger:
+						logger.Error(f"{module}: Error downloading '{mod}'!")
+					else:
+						print(f"{module}: Error downloading '{mod}'!")
+					return False
+
+		else:
+			# TODO: pip install
+			if logger:
+				logger.Error(f"{module}: '{mod}' not whitelisted!")
+			else:
+				print(f"{module}: '{mod}' not whitelisted!")
+			return False
+
+	return True
