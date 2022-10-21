@@ -7,7 +7,6 @@ from urllib.request import urlopen
 
 from flask import json
 
-from modules.config.config import Config
 
 
 def loadModules(logger=None) -> dict:
@@ -17,6 +16,8 @@ def loadModules(logger=None) -> dict:
 
 	:return: Modules Configuration
 	"""
+	from modules.config.config import Config
+
 	modules = next(os.walk('modules'))[1]
 	load = {}
 
@@ -29,7 +30,7 @@ def loadModules(logger=None) -> dict:
 			appAuthor = f"Author: {modCfg['VKore']['author']}"
 			appEditor = f"{appAuthor} | Editor: {modCfg['VKore']['modify']}" if "modify" in modCfg['VKore'] else appAuthor
 			if logger is not None:
-				logger.Info(f"Loading module: {appName} | v{appVersion} | {appEditor}")
+				logger.info(f"Loading module: {appName} | v{appVersion} | {appEditor}")
 			load[module] = modCfg
 		else:
 			if logger is not None:
@@ -67,35 +68,35 @@ def startModule(logger: any, modlue: str):
 	except Empty:
 		pass
 	else:  # got line
-		logger.Info(f"{modlue} Output: {line}")
+		logger.info(f"{modlue} Output: {line}")
 
 
-def runModule(widget: any, modlue: str):
+def runModule(logger: any, modlue: str):
 	"""Start a Valkore Module by run() in an own thread.
 
-	:param widget: UI logging widget
+	:param logger: Logger object
 	:param modlue: Module name
 	:return:
 	"""
 	import importlib
 	dyn_module = importlib.import_module(f"modules.{modlue}.{modlue}")
 
-	trd = Thread(target=dyn_module.run, name=modlue, args=(widget,))
+	trd = Thread(target=dyn_module.run, name=modlue, args=(logger,))
 	trd.daemon = True
 	trd.start()
 
 
 def getModule(config: dict, module: str, logger: any, whitelist: dict):
-	logger.Info(f"{module}: Starting module download")
+	logger.info(f"{module}: Starting module download")
 	out = check_output(f"git clone {whitelist[module]} modules/{module}")
 	if not out:
 		if logger:
-			logger.Info(f"{module}: Module download complete")
-			logger.Info(f"{module}: Checking for dependencies")
+			logger.info(f"{module}: Module download complete")
+			logger.info(f"{module}: Checking for dependencies")
 			if getDependency(config, module):
-				logger.Info(f"{module}: Dependencies up to date")
+				logger.info(f"{module}: Dependencies up to date")
 			else:
-				logger.Info(f"{module}: Error in dependencies!")
+				logger.info(f"{module}: Error in dependencies!")
 
 
 def getDependency(config: dict, module: str, logger=None) -> bool:
@@ -114,13 +115,13 @@ def getDependency(config: dict, module: str, logger=None) -> bool:
 		if mod in whitelist:
 			if not os.path.isdir(f"modules/{mod}"):
 				if logger:
-					logger.Info(f"{module}: Found dependency '{mod}'")
+					logger.info(f"{module}: Found dependency '{mod}'")
 				else:
 					print(f"{module}: Found dependency '{mod}'")
 				out = check_output(f"git clone {whitelist[mod]} modules/{mod}")
 				if not out:
 					if logger:
-						logger.Info(f"{module}: '{mod}' download complete")
+						logger.info(f"{module}: '{mod}' download complete")
 					else:
 						print(f"{module}: '{mod}' download complete")
 				if not os.path.isdir(f"modules/{mod}"):

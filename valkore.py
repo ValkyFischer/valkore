@@ -36,12 +36,12 @@ class ValKore:
 			self.log = Logger(path="modules/logger/config.ini", name="valkore", widget=self.log_ui)
 
 		# Write log
-		self.log.Info(f"-" * 100)
-		self.log.Info(f"PROJECT     : {CONFIG['VKore']['name']} | ..a project by VALKYTEQ")
-		self.log.Info(f"DESCRIPTION : {CONFIG['VKore']['description']}")
-		self.log.Info(f"AUTHOR      : {CONFIG['VKore']['author']}")
-		self.log.Info(f"VERSION     : {CONFIG['VKore']['version']}")
-		self.log.Info(f"-" * 100)
+		self.log.info(f"-" * 100)
+		self.log.info(f"PROJECT     : {CONFIG['VKore']['name']} | ..a project by VALKYTEQ")
+		self.log.info(f"DESCRIPTION : {CONFIG['VKore']['description']}")
+		self.log.info(f"AUTHOR      : {CONFIG['VKore']['author']}")
+		self.log.info(f"VERSION     : {CONFIG['VKore']['version']}")
+		self.log.info(f"-" * 100)
 
 		# load modules
 		self.modules = tools.loadModules(self.log)
@@ -66,7 +66,7 @@ class ValKore:
 		- Check if start as interval
 		- Check if start immediate
 		"""
-		self.log.Info(f"-" * 100)
+		self.log.info(f"-" * 100)
 
 		# go through all modules
 		if len(self.modules) > 0:
@@ -81,25 +81,25 @@ class ValKore:
 				if module != "valkore-ui" and self.log_ui is None:
 					# check if interval..
 					if cfg['VKore']['interval'] == "True" or cfg['VKore']['interval'] == "true":
-						self.log.Info(f"Scheduler: {cfg['VKore']['name']}")
+						self.log.info(f"Scheduler: {cfg['VKore']['name']}")
 						start = True
 					# ..or if autostart
 					elif cfg['VKore']['autostart'] == "True" or cfg['VKore']['autostart'] == "true":
-						self.log.Info(f"Autostart: {cfg['VKore']['name']}")
+						self.log.info(f"Autostart: {cfg['VKore']['name']}")
 						tools.startModule(self.log, module)
 						start = True
 
 			# only starting UI
 			if self.log_ui is not None:
-				self.log.Info(f"Autostart: Valkore UI")
+				self.log.info(f"Autostart: Valkore UI")
 			# nothing to start
 			if start is False and self.log_ui is None:
-				self.log.Info(f"No modules started or scheduled")
+				self.log.info(f"No modules started or scheduled")
 
 		# this should never happen, as VKore itself needs three modules
 		else:
-			self.log.Info(f"No modules loaded")
-		self.log.Info(f"-" * 100)
+			self.log.info(f"No modules loaded")
+		self.log.info(f"-" * 100)
 
 		# Enter UI loop
 		if self.log_ui is not None:
