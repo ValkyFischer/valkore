@@ -86,17 +86,12 @@ def runModule(logger: any, modlue: str):
 	trd.start()
 
 
-def getModule(config: dict, module: str, logger: any, whitelist: dict):
+def getModule(module: str, logger: any, whitelist: dict):
 	logger.info(f"{module}: Starting module download")
-	out = check_output(f"git clone {whitelist[module]} modules/{module}")
+	out = check_output(f"git clone {whitelist[module]['link']} modules/{module}")
 	if not out:
 		if logger:
 			logger.info(f"{module}: Module download complete")
-			logger.info(f"{module}: Checking for dependencies")
-			if getDependency(config, module):
-				logger.info(f"{module}: Dependencies up to date")
-			else:
-				logger.info(f"{module}: Error in dependencies!")
 
 
 def getDependency(config: dict, module: str, logger=None) -> bool:
@@ -118,7 +113,7 @@ def getDependency(config: dict, module: str, logger=None) -> bool:
 					logger.info(f"{module}: Found dependency '{mod}'")
 				else:
 					print(f"{module}: Found dependency '{mod}'")
-				out = check_output(f"git clone {whitelist[mod]} modules/{mod}")
+				out = check_output(f"git clone {whitelist[mod]['link']} modules/{mod}")
 				if not out:
 					if logger:
 						logger.info(f"{module}: '{mod}' download complete")
