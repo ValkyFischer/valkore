@@ -53,7 +53,7 @@ class ValKore:
 		"""
 		for module, cfg in self.modules.items():
 			if 'interval' in cfg['VKore']:
-				if cfg['VKore']['interval'] == "True" or cfg['VKore']['interval'] == "true":
+				if cfg['VKore']['interval']:
 					tools.startModule(self.log, module)
 		self._timer.enter(self._timerInterval, self._timerPrio, self.startModuleInterval, (schedule,))
 
@@ -80,11 +80,11 @@ class ValKore:
 				# if not in UI mode:
 				if module != "valkore-ui" and self.log_ui is None:
 					# check if interval..
-					if cfg['VKore']['interval'] == "True" or cfg['VKore']['interval'] == "true":
+					if cfg['VKore']['interval']:
 						self.log.info(f"Scheduler: {cfg['VKore']['name']}")
 						start = True
 					# ..or if autostart
-					elif cfg['VKore']['autostart'] == "True" or cfg['VKore']['autostart'] == "true":
+					elif cfg['VKore']['autostart']:
 						self.log.info(f"Autostart: {cfg['VKore']['name']}")
 						tools.startModule(self.log, module)
 						start = True
@@ -113,7 +113,7 @@ class ValKore:
 # start up framework
 if __name__ == '__main__':
 	CONFIG = Config(path="config.ini").readConfig()
-	if CONFIG['Settings']['interface'] == "True" or CONFIG['Settings']['interface'] == "true":
+	if CONFIG['Settings']['interface']:
 		import importlib
 		valkore_ui = importlib.import_module("modules.valkore-ui.valkore-ui")
 		isUi = True
