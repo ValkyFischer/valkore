@@ -1,12 +1,11 @@
 import os
 import sys
+
 from queue import Queue, Empty
 from subprocess import Popen, PIPE, check_output
 from threading import Thread
 from urllib.request import urlopen
-
 from flask import json
-
 
 
 def loadModules(logger=None) -> dict:
@@ -34,7 +33,7 @@ def loadModules(logger=None) -> dict:
 			load[module] = modCfg
 		else:
 			if logger is not None:
-				logger.Warn(f"Loading error: {module}")
+				logger.info(f"Loading error: {module}")
 
 	return load
 
