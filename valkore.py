@@ -86,7 +86,7 @@ class ValKore:
 					# ..or if autostart
 					elif cfg['VKore']['autostart']:
 						self.log.info(f"Autostart: {cfg['VKore']['name']}")
-						tools.startModule(self.log, module)
+						tools.runModule(self.log, module)
 						start = True
 
 			# only starting UI
