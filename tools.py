@@ -104,33 +104,37 @@ def getDependency(config: dict, module: str, logger=None) -> bool:
 	lookup = urlopen("https://valky.dev/api/valkore/")
 	whitelist = json.loads(lookup.read())
 
-	for mod, ver in config['Dependency'].items():
+	if not 'Dependency' in config:
+		return False
 
-		if mod in whitelist:
-			if not os.path.isdir(f"modules/{mod}"):
-				if logger:
-					logger.info(f"{module}: Found dependency '{mod}'")
-				else:
-					print(f"{module}: Found dependency '{mod}'")
-				out = check_output(f"git clone {whitelist[mod]['link']} modules/{mod}")
-				if not out:
-					if logger:
-						logger.info(f"{module}: '{mod}' download complete")
-					else:
-						print(f"{module}: '{mod}' download complete")
+	else:
+		for mod, ver in config['Dependency'].items():
+
+			if mod in whitelist:
 				if not os.path.isdir(f"modules/{mod}"):
 					if logger:
-						logger.Error(f"{module}: Error downloading '{mod}'!")
+						logger.info(f"{module}: Found dependency '{mod}'")
 					else:
-						print(f"{module}: Error downloading '{mod}'!")
-					return False
+						print(f"{module}: Found dependency '{mod}'")
+					out = check_output(f"git clone {whitelist[mod]['link']} modules/{mod}")
+					if not out:
+						if logger:
+							logger.info(f"{module}: '{mod}' download complete")
+						else:
+							print(f"{module}: '{mod}' download complete")
+					if not os.path.isdir(f"modules/{mod}"):
+						if logger:
+							logger.Error(f"{module}: Error downloading '{mod}'!")
+						else:
+							print(f"{module}: Error downloading '{mod}'!")
+						return False
 
-		else:
-			# TODO: pip install
-			if logger:
-				logger.Error(f"{module}: '{mod}' not whitelisted!")
 			else:
-				print(f"{module}: '{mod}' not whitelisted!")
-			return False
+				# TODO: pip install
+				if logger:
+					logger.Error(f"{module}: '{mod}' not whitelisted!")
+				else:
+					print(f"{module}: '{mod}' not whitelisted!")
+				return False
 
-	return True
+		return True
