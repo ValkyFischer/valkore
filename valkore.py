@@ -1,3 +1,5 @@
+import os.path
+
 import init
 
 from sched import scheduler
@@ -31,10 +33,8 @@ class ValKore:
 		self.log_ui = None
 		if interface is True:
 			self.log_ui = valkore_ui.load()
-			self.log = Logger(path="modules/logger/config.ini", name="valkore", widget=self.log_ui.getLogWidget())
-		else:
-			self.log = Logger(path="modules/logger/config.ini", name="valkore", widget=self.log_ui)
 
+		self.log = Logger(path="modules/logger/config.ini", name="valkore")
 		# Write log
 		self.log.info(f"-" * 100)
 		self.log.info(f"PROJECT     : {CONFIG['VKore']['name']} | ..a project by VALKYTEQ")
@@ -54,7 +54,7 @@ class ValKore:
 		for module, cfg in self.modules.items():
 			if 'interval' in cfg['VKore']:
 				if cfg['VKore']['interval']:
-					tools.startModule(self.log, module)
+					tools.runProcess(self.log, module)
 		self._timer.enter(self._timerInterval, self._timerPrio, self.startModuleInterval, (schedule,))
 
 	# Startup
@@ -86,7 +86,7 @@ class ValKore:
 					# ..or if autostart
 					elif cfg['VKore']['autostart']:
 						self.log.info(f"Autostart: {cfg['VKore']['name']}")
-						tools.runModule(self.log, module)
+						tools.runProcess(self.log, module)
 						start = True
 
 			# only starting UI
@@ -112,6 +112,7 @@ class ValKore:
 
 # start up framework
 if __name__ == '__main__':
+
 	CONFIG = Config(path="config.ini").readConfig()
 	if CONFIG['Settings']['interface']:
 		import importlib
@@ -120,6 +121,9 @@ if __name__ == '__main__':
 	else:
 		valkore_ui = None
 		isUi = False
+
+	if os.path.exists(f"logs/logger.log"):
+		Logger.recycleLogs()
 
 	vk = ValKore(isUi)
 	vk.run()

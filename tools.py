@@ -1,5 +1,6 @@
 import os
 import sys
+from multiprocessing import Process, active_children
 
 from queue import Queue, Empty
 from subprocess import Popen, PIPE, check_output
@@ -70,7 +71,7 @@ def startModule(logger: any, modlue: str):
 		logger.info(f"{modlue} Output: {line}")
 
 
-def runModule(logger: any, modlue: str):
+def runThread(logger: any, modlue: str):
 	"""Start a Valkore Module by run() in an own thread.
 
 	:param logger: Logger object
@@ -83,6 +84,31 @@ def runModule(logger: any, modlue: str):
 	trd = Thread(target=dyn_module.run, name=modlue, args=(logger,))
 	trd.daemon = True
 	trd.start()
+
+
+def stopProcess(module):
+	processes = active_children()
+	for process in processes:
+		if process.name == module:
+			process.terminate()
+			process.join()
+			return True
+	return False
+
+
+def runProcess(logger: any, modlue: str):
+	"""Start a Valkore Module by run() in an own process.
+
+	:param logger: Logger object
+	:param modlue: Module name
+	:return:
+	"""
+	import importlib
+	dyn_module = importlib.import_module(f"modules.{modlue}.{modlue}")
+
+	prc = Process(target=dyn_module.run, name=modlue, args=(logger,))
+	prc.daemon = True
+	prc.start()
 
 
 def getModule(module: str, logger: any, whitelist: dict):
